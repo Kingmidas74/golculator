@@ -5,4 +5,5 @@ type IOperationList interface {
 	FindOperationByName(string) (IOperation,error)
 	FindOperationsStartsWith(string) []IOperation
 	GetMaxPriority() int
+	GetAll() []IOperation
 }

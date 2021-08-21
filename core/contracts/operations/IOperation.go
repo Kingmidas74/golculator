@@ -5,5 +5,4 @@ type IOperation interface {
 	GetPriority() int
 	GetArgumentsCount() int
 	GetCode() string
-	GetHandler() func([]float64)(float64,error)
 }

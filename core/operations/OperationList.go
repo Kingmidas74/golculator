@@ -60,4 +60,8 @@ func(this *OperationList) GetMaxPriority() int {
 	return this.maxPriority
 }
 
+func(this *OperationList) GetAll() []operations.IOperation {
+	return this.operations
+}
+
 

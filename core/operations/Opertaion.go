@@ -5,7 +5,6 @@ type Operation struct {
 	Priority int
 	ArgumentsCount int
 	Code string
-	Handler func([]float64)(float64,error)
 }
 
 func(this *Operation) GetName() string {
@@ -22,8 +21,4 @@ func(this *Operation) GetArgumentsCount() int {
 
 func(this *Operation) GetCode() string {
 	return this.Code
-}
-
-func(this *Operation) GetHandler() func([]float64)(float64,error) {
-	return this.Handler
 }

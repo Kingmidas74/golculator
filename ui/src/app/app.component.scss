@@ -23,10 +23,58 @@
                  }
             }
         }
+
+        .result {
+            padding: .5rem;
+            width: 60rem !important; 
+
+            &.first {
+                padding: .9rem;
+                width: 70rem !important; 
+                background-color: rgba(0, 255, 0, 0.15);
+            }
+        }
         
 
     }
+
+    .acc {
+        background-color: #666;
+    }
+
+    .acccon {
+
+        height:24vh;
+        max-height: 24vh;
+    }
+
+    .add {
+        width: 90%;
+        margin: .2rem;
+        align-self: center;
+    }
+
+    .app-ace-editor {
+        border: 2px solid #f8f9fa;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      }
+
+      #editor, .editor {
+        border:1px solid red;
+        display:flex;
+        flex:1;
+      }
     
 
     
+}
+
+.save {
+    position:absolute;
+    bottom: .9rem;
+    right: .9rem;
+}
+
+.cdkv {
+    height: 24vh;
 }

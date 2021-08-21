@@ -15,8 +15,6 @@ import (
 
 func main() {
 
-	//input := "(2+2)*3*S1(2)+(1+POW(2,4)/6)"
-
 	actualOperations,err := loadOperations("./operations")
 	if err != nil {
 		log.Fatal(err)
@@ -29,15 +27,8 @@ func main() {
 
 	calculator := core.NewCalculator(actualLexer,actualTransformer,actualOperations,actualArrayProvider,actualOperationExecutor)
 
-	webServer := server.NewWebServer(calculator)
+	webServer := server.NewWebServer(calculator, actualOperations)
 	webServer.Run()
-	/*
-	result,err := calculator.Calculate(input)
-	if err != nil {
-		panic(err.Error())
-	}
-	fmt.Printf("%s = %f", input, result)*/
-
 }
 
 func loadOperations(source string) (ioperations.IOperationList,error) {
