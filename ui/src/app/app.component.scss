@@ -1,0 +1,32 @@
+:host {
+    background-color: #333;
+
+    .main {
+        background-color: #ccc;
+        display: flex;
+        flex:1;
+        align-items: center;
+        flex-flow: column;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+
+        .card {
+            padding: 1rem;
+
+            .expression-form-field {
+                width: 80rem !important;
+                font-size: 3rem;
+
+                ::ng-deep .mat-form-field-wrapper{
+                    margin-bottom: -1.25em;
+                 }
+            }
+        }
+        
+
+    }
+    
+
+    
+}
