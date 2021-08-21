@@ -7,6 +7,7 @@ import (
 	"golculator/core/helpers"
 	"golculator/core/operations"
 	"golculator/core/parser"
+	"golculator/server"
 	"log"
 	"strconv"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 func main() {
 
-	input := "(2+2)*3*S1(2)+(1+POW(2,4)/6)"
+	//input := "(2+2)*3*S1(2)+(1+POW(2,4)/6)"
 
 	actualOperations,err := loadOperations("./operations")
 	if err != nil {
@@ -28,11 +29,14 @@ func main() {
 
 	calculator := core.NewCalculator(actualLexer,actualTransformer,actualOperations,actualArrayProvider,actualOperationExecutor)
 
+	webServer := server.NewWebServer(calculator)
+	webServer.Run()
+	/*
 	result,err := calculator.Calculate(input)
 	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Printf("%s = %f", input, result)
+	fmt.Printf("%s = %f", input, result)*/
 
 }
 
@@ -45,10 +49,10 @@ func loadOperations(source string) (ioperations.IOperationList,error) {
 		"DIV": "/",
 	}
 	operationsPrioritiesMap := map[string]int {
-		"ADD": 2,
-		"SUB": 2,
-		"MUL": 1,
-		"DIV": 1,
+		"ADD": 1,
+		"SUB": 1,
+		"MUL": 2,
+		"DIV": 2,
 	}
 
 	actualOperations := operations.NewOperationList()
