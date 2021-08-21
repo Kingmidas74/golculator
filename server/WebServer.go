@@ -21,13 +21,13 @@ type CalculateRequest struct {
 }
 
 type OperationDTO struct {
-	Name string
+	Name           string
 	ArgumentsCount int
-	Code string
+	Code           string
 }
 
 type WebServer struct {
-	CurrentCalculator contracts.ICalculator
+	CurrentCalculator   contracts.ICalculator
 	AvailableOperations ioperations.IOperationList
 }
 
@@ -37,15 +37,15 @@ func NewWebServer(currentCalculator contracts.ICalculator, availableOperations i
 	return result
 }
 
-func(this *WebServer) Run() {
+func (this *WebServer) Run() {
 	r := gin.Default()
 	r.NoRoute(func(c *gin.Context) {
 		dir, file := path.Split(c.Request.RequestURI)
 		ext := filepath.Ext(file)
 		if file == "" || ext == "" {
-			c.File("./ui/dist/ui/index.html")
+			c.File("./static/index.html")
 		} else {
-			c.File("./ui/dist/ui/" + path.Join(dir, file))
+			c.File("./static/" + path.Join(dir, file))
 		}
 	})
 
@@ -66,7 +66,7 @@ func (this *WebServer) AddOperationHandler(context *gin.Context) {
 		return
 	}
 	if operationDto.Name == "+" || operationDto.Name == "-" || operationDto.Name == "*" || operationDto.Name == "/" {
-		context.JSON(http.StatusBadRequest,"")
+		context.JSON(http.StatusBadRequest, "")
 		return
 	}
 	err = this.AvailableOperations.Add(&operations.Operation{
@@ -82,9 +82,9 @@ func (this *WebServer) AddOperationHandler(context *gin.Context) {
 }
 
 func (this *WebServer) GetOperationsHandler(context *gin.Context) {
-	result := make([]OperationDTO,0)
+	result := make([]OperationDTO, 0)
 	for _, operation := range this.AvailableOperations.GetAll() {
-		if operation.GetPriority()>0 {
+		if operation.GetPriority() > 0 {
 			result = append(result, OperationDTO{
 				Name:           operation.GetName(),
 				ArgumentsCount: operation.GetArgumentsCount(),
@@ -106,9 +106,9 @@ func (this *WebServer) CalculateExpressionHandler(context *gin.Context) {
 	actualOperationExecutor := operations.NewOperationExecutor(this.AvailableOperations)
 	actualArrayProvider := helpers.NewArrayProvider()
 
-	calculator := core.NewCalculator(actualLexer,actualTransformer,this.AvailableOperations,actualArrayProvider,actualOperationExecutor)
+	calculator := core.NewCalculator(actualLexer, actualTransformer, this.AvailableOperations, actualArrayProvider, actualOperationExecutor)
 
-	result,err := calculator.Calculate(calculateRequest.Expression)
+	result, err := calculator.Calculate(calculateRequest.Expression)
 	if err != nil {
 		context.JSON(500, err)
 		return

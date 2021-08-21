@@ -1,0 +1,23 @@
+version: "3.7"
+services:
+
+  golculator-service:
+    image: localhost:5000/golculator:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: golculator
+    restart: unless-stopped
+    expose:
+      - 3000
+
+  golculator-nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: golculator-nginx
+    restart: unless-stopped
+    ports:
+      - "3000:8989"
+    depends_on:
+      - golculator-service
