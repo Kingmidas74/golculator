@@ -2,13 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"golculator/core"
-	"golculator/core/contracts"
-	ioperations "golculator/core/contracts/operations"
 	"golculator/core/helpers"
 	"golculator/core/operations"
 	"golculator/core/parser"
+	"golculator/storage"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -27,25 +27,24 @@ type OperationDTO struct {
 }
 
 type WebServer struct {
-	CurrentCalculator   contracts.ICalculator
-	AvailableOperations ioperations.IOperationList
+	DB storage.Database
 }
 
-func NewWebServer(currentCalculator contracts.ICalculator, availableOperations ioperations.IOperationList) WebServer {
+func NewWebServer(db storage.Database) WebServer {
 
-	result := WebServer{CurrentCalculator: currentCalculator, AvailableOperations: availableOperations}
+	result := WebServer{DB: db}
 	return result
 }
 
-func (this *WebServer) Run() {
+func (this *WebServer) Run(staticPath, port string) {
 	r := gin.Default()
 	r.NoRoute(func(c *gin.Context) {
 		dir, file := path.Split(c.Request.RequestURI)
 		ext := filepath.Ext(file)
 		if file == "" || ext == "" {
-			c.File("./static/index.html")
+			c.File(fmt.Sprintf("%sindex.html", staticPath))
 		} else {
-			c.File("./static/" + path.Join(dir, file))
+			c.File(fmt.Sprintf("%s%s", staticPath, path.Join(dir, file)))
 		}
 	})
 
@@ -53,7 +52,7 @@ func (this *WebServer) Run() {
 	r.GET("/operations", this.GetOperationsHandler)
 	r.POST("/expressions", this.CalculateExpressionHandler)
 
-	err := r.Run(":3000")
+	err := r.Run(fmt.Sprintf(":%s", port))
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +68,8 @@ func (this *WebServer) AddOperationHandler(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, "")
 		return
 	}
-	err = this.AvailableOperations.Add(&operations.Operation{
+
+	this.DB.CreateOperation(storage.DBOperation{
 		Name:           operationDto.Name,
 		Priority:       3,
 		ArgumentsCount: operationDto.ArgumentsCount,
@@ -83,12 +83,17 @@ func (this *WebServer) AddOperationHandler(context *gin.Context) {
 
 func (this *WebServer) GetOperationsHandler(context *gin.Context) {
 	result := make([]OperationDTO, 0)
-	for _, operation := range this.AvailableOperations.GetAll() {
-		if operation.GetPriority() > 0 {
+	availableOperations, err := this.DB.GetOperations()
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, err)
+	}
+	for _, operation := range availableOperations {
+		if operation.Priority > 0 {
 			result = append(result, OperationDTO{
-				Name:           operation.GetName(),
-				ArgumentsCount: operation.GetArgumentsCount(),
-				Code:           operation.GetCode(),
+				Name:           operation.Name,
+				ArgumentsCount: operation.ArgumentsCount,
+				Code:           operation.Code,
 			})
 		}
 	}
@@ -101,12 +106,30 @@ func (this *WebServer) CalculateExpressionHandler(context *gin.Context) {
 		context.JSON(statusCode, err)
 		return
 	}
-	actualLexer := parser.NewLexer(this.AvailableOperations)
-	actualTransformer := parser.NewTransformer(this.AvailableOperations)
-	actualOperationExecutor := operations.NewOperationExecutor(this.AvailableOperations)
+
+	availableOperationsDB, err := this.DB.GetOperations()
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, err)
+	}
+
+	availableOperations := &operations.OperationList{}
+
+	for _, op := range availableOperationsDB {
+		availableOperations.Add(&operations.Operation{
+			Name:           op.Name,
+			Priority:       op.Priority,
+			ArgumentsCount: op.ArgumentsCount,
+			Code:           op.Code,
+		})
+	}
+
+	actualLexer := parser.NewLexer(availableOperations)
+	actualTransformer := parser.NewTransformer(availableOperations)
+	actualOperationExecutor := operations.NewOperationExecutor(availableOperations)
 	actualArrayProvider := helpers.NewArrayProvider()
 
-	calculator := core.NewCalculator(actualLexer, actualTransformer, this.AvailableOperations, actualArrayProvider, actualOperationExecutor)
+	calculator := core.NewCalculator(actualLexer, actualTransformer, availableOperations, actualArrayProvider, actualOperationExecutor)
 
 	result, err := calculator.Calculate(calculateRequest.Expression)
 	if err != nil {

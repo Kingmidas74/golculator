@@ -2,44 +2,92 @@ package main
 
 import (
 	"fmt"
-	"golculator/core"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	ioperations "golculator/core/contracts/operations"
-	"golculator/core/helpers"
 	"golculator/core/operations"
-	"golculator/core/parser"
 	"golculator/server"
+	"golculator/storage"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
 
 func main() {
 
-	actualOperations,err := loadOperations("./operations")
+	currentEnvironment := os.Getenv("ENVIRONMENT")
+	if len(currentEnvironment) == 0 || currentEnvironment == "Development" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	db, err := GetDB()
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	actualLexer := parser.NewLexer(actualOperations)
-	actualTransformer := parser.NewTransformer(actualOperations)
-	actualOperationExecutor := operations.NewOperationExecutor(actualOperations)
-	actualArrayProvider := helpers.NewArrayProvider()
+	argsWithoutProg := os.Args[1:]
 
-	calculator := core.NewCalculator(actualLexer,actualTransformer,actualOperations,actualArrayProvider,actualOperationExecutor)
+	switch argsWithoutProg[0] {
+	case "seed":
+		{
+			err = Seeding(db)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
 
-	webServer := server.NewWebServer(calculator, actualOperations)
-	webServer.Run()
+	webServer := server.NewWebServer(db)
+	webServer.Run("./static/", os.Getenv("APP_PORT"))
 }
 
-func loadOperations(source string) (ioperations.IOperationList,error) {
+func GetDB() (storage.Database, error) {
 
-	operationsNameMap := map[string]string {
+	db := storage.Database{}
+
+	if err := db.Initialize(os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME")); err != nil {
+		return storage.Database{}, err
+	}
+
+	return db, nil
+}
+
+func Seeding(db storage.Database) error {
+	actualOperations, err := loadOperations("./operations/")
+	if err != nil {
+		return err
+	}
+
+	err = db.Up()
+	if err != nil {
+		return err
+	}
+
+	for _, operation := range actualOperations.GetAll() {
+		db.CreateOperation(storage.DBOperation{
+			Name:           operation.GetName(),
+			ArgumentsCount: operation.GetArgumentsCount(),
+			Priority:       operation.GetPriority(),
+			Code:           operation.GetCode(),
+		})
+	}
+	return nil
+}
+
+func loadOperations(source string) (ioperations.IOperationList, error) {
+
+	operationsNameMap := map[string]string{
 		"ADD": "+",
 		"SUB": "-",
 		"MUL": "*",
 		"DIV": "/",
 	}
-	operationsPrioritiesMap := map[string]int {
+	operationsPrioritiesMap := map[string]int{
 		"ADD": 1,
 		"SUB": 1,
 		"MUL": 2,
@@ -50,25 +98,25 @@ func loadOperations(source string) (ioperations.IOperationList,error) {
 
 	fileReader := FileReader{}
 
-	files,err := fileReader.GetListOfFiles(source)
+	files, err := fileReader.GetListOfFiles(source)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, f := range files {
-		fileInfo := strings.Split(f.Name(),".")
+		fileInfo := strings.Split(f.Name(), ".")
 
 		operationName := fileInfo[0]
-		operationArgsCount,err := strconv.Atoi(fileInfo[1])
+		operationArgsCount, err := strconv.Atoi(fileInfo[1])
 		if err != nil {
 			return nil, err
 		}
-		operationCode, err := fileReader.ReadFileToString(fmt.Sprintf("%s/%s",source,f.Name()))
+		operationCode, err := fileReader.ReadFileToString(fmt.Sprintf("%s%s", source, f.Name()))
 		if err != nil {
 			return nil, err
 		}
 
-		if shortName, nameExist :=operationsNameMap[operationName]; nameExist {
+		if shortName, nameExist := operationsNameMap[operationName]; nameExist {
 			if priority, priorityExist := operationsPrioritiesMap[operationName]; priorityExist {
 				actualOperations.Add(&operations.Operation{
 					Name:           shortName,

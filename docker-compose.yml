@@ -1,5 +1,53 @@
 version: "3.7"
+volumes:
+  pgadmin_data:
+    driver: local
+  pg_data:
+    driver: local
+
+networks:
+  golculator:
+    driver: bridge
+
 services:
+
+  db:
+    image: postgres:13.2-alpine
+    hostname: db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - 6432:5432
+    container_name: go_db
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+      POSTGRES_PASSWORD: "TestPassw0rd!"
+      POSTGRES_USER: "postgres"
+    networks:
+      - golculator
+
+  pgadmin:
+    restart: always
+    image: dpage/pgadmin4
+    container_name: go_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "test@mail.ru"
+      PGADMIN_DEFAULT_PASSWORD: "TestPassw0rd!"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 6433:80
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - golculator
 
   golculator-service:
     image: localhost:5000/golculator:latest
@@ -10,6 +58,19 @@ services:
     restart: unless-stopped
     expose:
       - 3000
+    environment:
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DB_PASSWORD: "TestPassw0rd!"
+      DB_NAME: "golculator"
+      APP_PORT: "3000"
+      ENVIRONMENT: "Docker"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - golculator
 
   golculator-nginx:
     build:
@@ -21,3 +82,5 @@ services:
       - "3000:8989"
     depends_on:
       - golculator-service
+    networks:
+      - golculator

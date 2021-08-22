@@ -23,9 +23,7 @@ COPY --from=angularbuild /usr/src/static ./static
 COPY --from=gobuild /src/golculator .
 COPY --from=gobuild /src/operations ./operations
 
-RUN ls -las /app
-
-CMD ["/app/golculator"]
+CMD ["/app/golculator", "seed"]
 
 
 
