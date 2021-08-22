@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"golculator/core/collections"
 	"golculator/core/contracts"
 	icollections "golculator/core/contracts/collections"
@@ -23,14 +24,17 @@ func (this *Transformer) TransformToRPN(lexemes []ilexemes.ILexeme) (icollection
 	operationStack := collections.NewStack()
 	result := collections.NewQueue()
 
-	for _, lexeme := range lexemes {
-		/*if lexeme.GetValue()== operations.Comma {
-			continue
-		}*/
+	for i, lexeme := range lexemes {
+
 		if lexeme.GetType() == ilexemes.DataLexeme {
 			result.Push(lexeme)
 			continue
 		}
+
+		if i == len(lexemes)-1 && lexeme.GetValue() != operations.CloseBracket {
+			return nil, errors.New("operation without operand")
+		}
+
 		if lexeme.GetValue() == operations.OpenBracket || operationStack.Count() == 0 {
 			operationStack.Push(lexeme)
 			continue
@@ -38,7 +42,7 @@ func (this *Transformer) TransformToRPN(lexemes []ilexemes.ILexeme) (icollection
 		if lexeme.GetValue() == operations.CloseBracket || lexeme.GetValue() == operations.Comma {
 			for true {
 				op, _ := operationStack.Pop()
-				if op != nil && op.GetValue() != operations.OpenBracket {
+				if op.GetValue() != operations.OpenBracket {
 					result.Push(op)
 				} else {
 					if lexeme.GetValue() == operations.Comma {
