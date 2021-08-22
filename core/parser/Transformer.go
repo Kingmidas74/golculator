@@ -18,41 +18,44 @@ func NewTransformer(operations ioperations.IOperationList) contracts.ITransforme
 	return result
 }
 
-func(this *Transformer) TransformToRPN(lexemes []ilexemes.ILexeme) (icollections.ICollection,error) {
+func (this *Transformer) TransformToRPN(lexemes []ilexemes.ILexeme) (icollections.ICollection, error) {
 
 	operationStack := collections.NewStack()
 	result := collections.NewQueue()
 
 	for _, lexeme := range lexemes {
-		if lexeme.GetValue()== operations.Comma {
+		/*if lexeme.GetValue()== operations.Comma {
 			continue
-		}
+		}*/
 		if lexeme.GetType() == ilexemes.DataLexeme {
 			result.Push(lexeme)
 			continue
 		}
-		if lexeme.GetValue() == operations.OpenBracket || operationStack.Count()==0 {
+		if lexeme.GetValue() == operations.OpenBracket || operationStack.Count() == 0 {
 			operationStack.Push(lexeme)
 			continue
 		}
-		if lexeme.GetValue() == operations.CloseBracket {
+		if lexeme.GetValue() == operations.CloseBracket || lexeme.GetValue() == operations.Comma {
 			for true {
 				op, _ := operationStack.Pop()
-				if op.GetValue() != operations.OpenBracket {
+				if op != nil && op.GetValue() != operations.OpenBracket {
 					result.Push(op)
 				} else {
+					if lexeme.GetValue() == operations.Comma {
+						operationStack.Push(op)
+					}
 					break
 				}
 			}
 			continue
 		}
 
-		currentOperation,err := this.OperationList.FindOperationByName(lexeme.GetValue())
+		currentOperation, err := this.OperationList.FindOperationByName(lexeme.GetValue())
 		if err != nil {
 			return nil, err
 		}
 
-		for operationStack.Count()>0 {
+		for operationStack.Count() > 0 {
 			previousOperationLexeme, err := operationStack.Peek()
 			if err != nil {
 				return nil, err
@@ -62,7 +65,7 @@ func(this *Transformer) TransformToRPN(lexemes []ilexemes.ILexeme) (icollections
 				return nil, err
 			}
 			if currentOperation.GetPriority() <= previousOperation.GetPriority() {
-				op,_ := operationStack.Pop()
+				op, _ := operationStack.Pop()
 				result.Push(op)
 				continue
 			}
@@ -71,8 +74,8 @@ func(this *Transformer) TransformToRPN(lexemes []ilexemes.ILexeme) (icollections
 		operationStack.Push(lexeme)
 	}
 
-	for operationStack.Count()>0 {
-		op,_ := operationStack.Pop()
+	for operationStack.Count() > 0 {
+		op, _ := operationStack.Pop()
 		result.Push(op)
 	}
 
