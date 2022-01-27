@@ -10,14 +10,14 @@ import (
 func TestCalculator_Calculate(t *testing.T) {
 	availableOperations := &operations.OperationList{}
 
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           "+",
 		Priority:       1,
 		ArgumentsCount: 2,
 		Code: "result[1]=args[1]+args[3]\n" +
 			"result[2]=args[2]+args[4]\n",
 	})
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           "-",
 		Priority:       1,
 		ArgumentsCount: 2,
@@ -29,14 +29,14 @@ func TestCalculator_Calculate(t *testing.T) {
 			"result[1]=args[1]-args[3]\n" +
 			"result[2]=args[2]-args[4]\n",
 	})
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           "*",
 		Priority:       2,
 		ArgumentsCount: 2,
 		Code: "result[1]=args[1]*args[3]-args[2]*args[4]\n" +
 			"result[2]=args[1]*args[4]+args[2]*args[3]\n",
 	})
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           "/",
 		Priority:       2,
 		ArgumentsCount: 2,
@@ -44,19 +44,19 @@ func TestCalculator_Calculate(t *testing.T) {
 			"result[1]=(args[1]*args[3]+args[2]*args[4])/d\n" +
 			"result[2]=(args[2]*args[3]-args[1]*args[4])/d",
 	})
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           "(",
 		Priority:       0,
 		ArgumentsCount: 0,
 		Code:           "",
 	})
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           ")",
 		Priority:       0,
 		ArgumentsCount: 0,
 		Code:           "",
 	})
-	availableOperations.Add(&operations.Operation{
+	_ = availableOperations.Add(&operations.Operation{
 		Name:           ".",
 		Priority:       0,
 		ArgumentsCount: 0,
