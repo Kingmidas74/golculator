@@ -5,14 +5,15 @@ inputs:
     description: 'Target golang version'
     required: true
 
+description: Run tests
+
 runs:
   using: "composite"
   steps:
-    steps:
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ inputs.go-version }}
-      - name: Test
-        run: make test
-        shell: bash
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ inputs.go-version }}
+    - name: Test
+      run: make test
+      shell: bash
