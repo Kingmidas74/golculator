@@ -8,4 +8,4 @@ clean:
 	docker-compose rm --stop --force
 
 test:
-	go test ./core/
+	go test ./...
