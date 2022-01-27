@@ -136,7 +136,7 @@ func (this *WebServer) CalculateExpressionHandler(context *gin.Context) {
 		context.JSON(500, err)
 		return
 	}
-	context.JSON(statusCode, gin.H{"result": result})
+	context.JSON(statusCode, gin.H{"result": fmt.Sprintf("%G", result)})
 }
 
 func (this *WebServer) convertHTTPBodyToTodo(httpBody io.ReadCloser) (CalculateRequest, int, error) {
