@@ -1,5 +1,5 @@
 package operations
 
 type IOperationExecutor interface {
-	ExecuteOperation(string, []float64) (float64,error)
+	ExecuteOperation(string, []complex128) (complex128, error)
 }

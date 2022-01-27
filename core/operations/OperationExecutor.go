@@ -16,17 +16,17 @@ func NewOperationExecutor(operations ioperations.IOperationList) ioperations.IOp
 	return result
 }
 
-func(this *OperationExecutor) ExecuteOperation(name string, arguments []float64) (float64,error) {
+func (this *OperationExecutor) ExecuteOperation(name string, arguments []complex128) (complex128, error) {
 
 	operation, err := this.CurrentOperations.FindOperationByName(name)
 	if err != nil {
 		return 0, err
 	}
 
-	return this.callLua(operation,arguments)
+	return this.callLua(operation, arguments)
 }
 
-func (this *OperationExecutor) callLua(operation ioperations.IOperation, arguments []float64) (float64,error) {
+func (this *OperationExecutor) callLua(operation ioperations.IOperation, arguments []complex128) (complex128, error) {
 
 	L := lua.NewState()
 	defer L.Close()
@@ -34,19 +34,28 @@ func (this *OperationExecutor) callLua(operation ioperations.IOperation, argumen
 	args := &lua.LTable{}
 	args.Metatable = lua.LNil
 
-	for i, argument := range arguments {
-		args.Insert(i,luar.New(L, argument))
+	floatsArgs := make([]float64, 0)
+	for _, argument := range arguments {
+		floatsArgs = append(floatsArgs, real(argument))
+		floatsArgs = append(floatsArgs, imag(argument))
 	}
 
-	resultLua := lua.LNumber(0)
+	for i, argument := range floatsArgs {
+		args.Insert(i+1, luar.New(L, argument))
+	}
+
+	result := &lua.LTable{}
+	result.Metatable = lua.LNil
 
 	L.SetGlobal("args", args)
-	L.SetGlobal("result", resultLua)
+	L.SetGlobal("result", result)
 
 	if err := L.DoString(operation.GetCode()); err != nil {
 		return 0, err
 	}
 
-	ret := L.Get(-1)
-	return strconv.ParseFloat(ret.String(),64)
+	realRet, _ := strconv.ParseFloat(result.RawGetInt(1).String(), 64)
+	imagRet, _ := strconv.ParseFloat(result.RawGetInt(2).String(), 64)
+
+	return complex(realRet, imagRet), nil
 }

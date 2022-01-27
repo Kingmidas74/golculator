@@ -12,9 +12,9 @@ import (
 )
 
 type Calculator struct {
-	CurrentLexer contracts.ILexer
-	CurrentTransformer contracts.ITransformer
-	CurrentOperations ioperations.IOperationList
+	CurrentLexer             contracts.ILexer
+	CurrentTransformer       contracts.ITransformer
+	CurrentOperations        ioperations.IOperationList
 	CurrentArrayProvider     helpers.IArrayProvider
 	CurrentOperationExecutor ioperations.IOperationExecutor
 }
@@ -30,11 +30,11 @@ func NewCalculator(currentLexer contracts.ILexer, currentTransformer contracts.I
 	return result
 }
 
-func(this *Calculator) Calculate(expression string) (float64,error) {
+func (this *Calculator) Calculate(expression string) (complex128, error) {
 
 	lexemes, err := this.CurrentLexer.Parse(expression)
 	if err != nil {
-		return 0,err
+		return 0, err
 	}
 
 	chain, err := this.CurrentTransformer.TransformToRPN(lexemes)
@@ -42,10 +42,8 @@ func(this *Calculator) Calculate(expression string) (float64,error) {
 		return 0, err
 	}
 
-
-
 	result := collections.NewStack()
-	for chain.Count()>0 {
+	for chain.Count() > 0 {
 		c, err := chain.Pop()
 		if err != nil {
 			return 0, err
@@ -58,20 +56,21 @@ func(this *Calculator) Calculate(expression string) (float64,error) {
 		if err != nil {
 			return 0, err
 		}
-		operands := make([]float64, 0)
-		for i := 0; i < op.GetArgumentsCount() && result.Count()>0; i++ {
-			a, err := result.Pop()
+		operands := make([]complex128, 0)
+		for i := 0; i < op.GetArgumentsCount() && result.Count() > 0; i++ {
+			operand, err := result.Pop()
+
 			if err != nil {
 				return 0, err
 			}
-			parsedOperand, err := strconv.ParseFloat(a.GetValue(),64)
+
+			operandValue, err := strconv.ParseComplex(operand.GetValue(), 128)
 			if err != nil {
 				return 0, err
 			}
-			operands = append(operands, parsedOperand)
+			operands = append(operands, operandValue)
 
-
-			operands = this.CurrentArrayProvider.ReverseFloatArray(operands)
+			operands = this.CurrentArrayProvider.ReverseComplexArray(operands)
 		}
 		uresult, err := this.CurrentOperationExecutor.ExecuteOperation(op.GetName(), operands)
 		if err != nil {
@@ -79,18 +78,17 @@ func(this *Calculator) Calculate(expression string) (float64,error) {
 		}
 
 		result.Push(&parser.Lexeme{
-			Value: fmt.Sprintf("%f",uresult),
+			Value: fmt.Sprintf("%G", uresult),
 			Type:  ilexemes.DataLexeme,
 		})
 	}
-	unparsedResult,err := result.Pop()
+	unparsedResult, err := result.Pop()
 	if err != nil {
 		return 0, err
 	}
-	parsedResult, err := strconv.ParseFloat(unparsedResult.GetValue(),64)
+	parsedResult, err := strconv.ParseComplex(unparsedResult.GetValue(), 128)
 	if err != nil {
 		return 0, err
 	}
 	return parsedResult, nil
 }
-
