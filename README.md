@@ -18,7 +18,7 @@
 
 Write a simple calculator with support of expression parsing.
 
-###Requirements
+### Requirements
 
 - Support any math correct expressions with a primitive base operations
 - Support unary operations
@@ -26,7 +26,7 @@ Write a simple calculator with support of expression parsing.
 - The calculator should have web-GUI
 - Test coverage
 
-###Optional
+### Optional
 
 - Support of Quaternions and Octonions algebra
 - Support user-defined functions
