@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine AS gobuild
+FROM golang:1.17.6-alpine AS gobuild
 WORKDIR /src
 COPY go.mod ./
 COPY go.sum ./
@@ -16,7 +16,7 @@ RUN npm ci
 COPY ./ui .
 RUN npm run build
 
-FROM golang:1.16-alpine
+FROM golang:1.17.6-alpine
 WORKDIR /app
 
 COPY --from=angularbuild /usr/src/static ./static
